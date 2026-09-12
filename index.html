@@ -183,48 +183,72 @@
      LIBRERÍAS (cargadas desde la raíz del repositorio)
      Orden importante, no cambiar
      ============================================================ -->
-<!-- PizZip: UMD, se carga solo -->
+<!-- PizZip -->
 <script src="pizzip.js"></script>
 
-<!-- ============ Docxtemplater (aislado) ============ -->
+<!-- ============ Docxtemplater ============ -->
 <script>
-  window.__savedModule  = window.module;
-  window.__savedExports = window.exports;
-  window.module  = { exports: {} };
+  window.__m = window.module; window.__e = window.exports;
+  window.module = { exports: {} };
   window.exports = window.module.exports;
 </script>
 <script src="docxtemplater.js"></script>
 <script>
   (function () {
     var exp = window.module.exports || {};
-    window.Docxtemplater = exp.Docxtemplater || exp.default || exp;
-    window.module  = window.__savedModule;
-    window.exports = window.__savedExports;
-    delete window.__savedModule;
-    delete window.__savedExports;
+    // Detectar la clase en cualquier propiedad posible
+    var Clase = exp.Docxtemplater
+              || exp.default
+              || (exp.default && exp.default.Docxtemplater)
+              || exp;
+    // Si quedó envuelto dentro de otra capa
+    if (Clase && typeof Clase !== 'function' && typeof Clase === 'object') {
+      var keys = Object.keys(Clase);
+      for (var i = 0; i < keys.length; i++) {
+        if (typeof Clase[keys[i]] === 'function' && keys[i].toLowerCase().indexOf('docxtemplater') !== -1) {
+          Clase = Clase[keys[i]];
+          break;
+        }
+      }
+    }
+    window.Docxtemplater = Clase;
+    console.log('Docxtemplater cargado como:', typeof window.Docxtemplater, window.Docxtemplater);
+    window.module = window.__m; window.exports = window.__e;
+    delete window.__m; delete window.__e;
   })();
 </script>
 
-<!-- ============ ImageModule (aislado) ============ -->
+<!-- ============ ImageModule ============ -->
 <script>
-  window.__savedModule  = window.module;
-  window.__savedExports = window.exports;
-  window.module  = { exports: {} };
+  window.__m = window.module; window.__e = window.exports;
+  window.module = { exports: {} };
   window.exports = window.module.exports;
 </script>
 <script src="imagemodule.min.js"></script>
 <script>
   (function () {
     var exp = window.module.exports || {};
-    window.ImageModule = exp.ImageModule || exp.default || exp;
-    window.module  = window.__savedModule;
-    window.exports = window.__savedExports;
-    delete window.__savedModule;
-    delete window.__savedExports;
+    var Clase = exp.ImageModule
+              || exp.default
+              || (exp.default && exp.default.ImageModule)
+              || exp;
+    if (Clase && typeof Clase !== 'function' && typeof Clase === 'object') {
+      var keys = Object.keys(Clase);
+      for (var i = 0; i < keys.length; i++) {
+        if (typeof Clase[keys[i]] === 'function' && keys[i].toLowerCase().indexOf('image') !== -1) {
+          Clase = Clase[keys[i]];
+          break;
+        }
+      }
+    }
+    window.ImageModule = Clase;
+    console.log('ImageModule cargado como:', typeof window.ImageModule, window.ImageModule);
+    window.module = window.__m; window.exports = window.__e;
+    delete window.__m; delete window.__e;
   })();
 </script>
 
-<!-- ============ FileSaver: UMD, se carga solo ============ -->
+<!-- FileSaver -->
 <script src="FileSaver.min.js"></script>
 
 <script>
