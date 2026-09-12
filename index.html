@@ -194,6 +194,23 @@
 <script src="FileSaver.min.js"></script>
 
 <script>
+// ImageModule crea algunos documentos XML con su propio DOM interno. Al final
+// Docxtemplater los sincroniza con XMLSerializer, pero el serializador nativo
+// solo acepta nodos del navegador. Este adaptador conserva el serializador
+// nativo para esos nodos y usa toString() para los nodos internos de ImageModule.
+const NativeXMLSerializer = window.XMLSerializer;
+window.XMLSerializer = function XMLSerializerCompatible() {
+  this.nativeSerializer = new NativeXMLSerializer();
+};
+window.XMLSerializer.prototype.serializeToString = function serializeToString(node) {
+  try {
+    return this.nativeSerializer.serializeToString(node);
+  } catch (error) {
+    if (node && typeof node.toString === 'function') return node.toString();
+    throw error;
+  }
+};
+
 // El bundle expone la librería como `docxtemplater`; se conserva un único alias
 // para utilizar el nombre del constructor de forma consistente en esta página.
 const Docxtemplater = window.docxtemplater;
