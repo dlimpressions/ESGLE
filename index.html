@@ -180,8 +180,36 @@
 <div class="status" id="status"></div>
 
 <!-- ============================================================
+     PARCHE DE COMPATIBILIDAD DEL XMLSerializer
+     docxtemplater usa el XMLSerializer nativo del navegador.
+     imagemodule.min.js crea nodos con la librería xmldom (ajenos al DOM).
+     Este parche permite serializar ambos tipos de nodos.
+     DEBE ejecutarse ANTES de cargar docxtemplater.js.
+     ============================================================ -->
+<script>
+(function () {
+  var Native = window.XMLSerializer;
+  window.XMLSerializer = function () {
+    this._native = new Native();
+  };
+  window.XMLSerializer.prototype.serializeToString = function (node) {
+    try {
+      return this._native.serializeToString(node);
+    } catch (e) {
+      // Nodo de xmldom: el navegador no lo reconoce como Node.
+      if (node && typeof node.toString === 'function') {
+        try {
+          return node.toString();
+        } catch (e2) { /* cae al throw original */ }
+      }
+      throw e;
+    }
+  };
+})();
+</script>
+
+<!-- ============================================================
      LIBRERÍAS (cargadas desde la raíz del repositorio)
-     Sin trucos: cada archivo expone su propia variable global.
      ============================================================ -->
 <script src="pizzip.js"></script>
 <script src="docxtemplater.js"></script>
@@ -191,11 +219,11 @@
 <script>
 // --- Verificar que las 4 librerías cargaron ---
 console.log('PizZip:', typeof window.PizZip);
-console.log('docxtemplater (window.docxtemplater):', typeof window.docxtemplater);
+console.log('docxtemplater:', typeof window.docxtemplater);
 console.log('ImageModule:', typeof window.ImageModule);
 console.log('saveAs:', typeof window.saveAs);
 
-// Alias para usar Docxtemplater con D mayúscula en el resto del código
+// Alias para poder usar Docxtemplater con D mayúscula en el resto del código
 window.Docxtemplater = window.docxtemplater;
 
 // ============================================================
@@ -331,10 +359,10 @@ async function generarDocumento() {
     });
 
     // ============================================================
-    // PARCHE DE COMPATIBILIDAD
-    // El módulo de imágenes viejo llama a getValue(tag) sin pasar meta.
+    // PARCHE DE COMPATIBILIDAD DE SCOPE MANAGER
+    // El módulo de imágenes viejo llama getValue(tag) sin pasar meta.
     // El docxtemplater nuevo requiere meta.part. Aquí inyectamos meta={}
-    // automáticamente cuando el módulo no lo pasa.
+    // automáticamente cuando no se pasa.
     // ============================================================
     const _origGetScopeManager = doc.getScopeManager;
     doc.getScopeManager = function(to, currentFile, tags) {
