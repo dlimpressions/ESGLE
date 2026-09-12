@@ -189,13 +189,15 @@
   APIs XML nativas del navegador y ImageModule ya incluye sus dependencias.
 -->
 <script src="pizzip.js"></script>
+<script src="docxtemplater.js"></script>
+<script src="imagemodule.min.js"></script>
+<script src="FileSaver.min.js"></script>
+
 <script>
 // ImageModule crea algunos documentos XML con su propio DOM interno. Al final
 // Docxtemplater los sincroniza con XMLSerializer, pero el serializador nativo
 // solo acepta nodos del navegador. Este adaptador conserva el serializador
 // nativo para esos nodos y usa toString() para los nodos internos de ImageModule.
-// Debe instalarse antes de cargar Docxtemplater porque el bundle guarda la
-// referencia a XMLSerializer durante su inicialización.
 const NativeXMLSerializer = window.XMLSerializer;
 window.XMLSerializer = function XMLSerializerCompatible() {
   this.nativeSerializer = new NativeXMLSerializer();
@@ -208,13 +210,7 @@ window.XMLSerializer.prototype.serializeToString = function serializeToString(no
     throw error;
   }
 };
-</script>
 
-<script src="docxtemplater.js"></script>
-<script src="imagemodule.min.js"></script>
-<script src="FileSaver.min.js"></script>
-
-<script>
 // El bundle expone la librería como `docxtemplater`; se conserva un único alias
 // para utilizar el nombre del constructor de forma consistente en esta página.
 const Docxtemplater = window.docxtemplater;
