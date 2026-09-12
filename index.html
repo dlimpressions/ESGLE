@@ -183,21 +183,48 @@
      LIBRERÍAS (cargadas desde la raíz del repositorio)
      Orden importante, no cambiar
      ============================================================ -->
-<!-- PizZip: funciona normal en el navegador -->
+<!-- PizZip: UMD, se carga solo -->
 <script src="pizzip.js"></script>
 
-<!-- Docxtemplater: necesita "module" para exportar -->
-<script>var module = { exports: {} };</script>
+<!-- ============ Docxtemplater (aislado) ============ -->
+<script>
+  window.__savedModule  = window.module;
+  window.__savedExports = window.exports;
+  window.module  = { exports: {} };
+  window.exports = window.module.exports;
+</script>
 <script src="docxtemplater.js"></script>
 <script>
-  window.Docxtemplater = module.exports.Docxtemplater || module.exports;
-  delete window.module; <!-- ¡IMPORTANTE! Se elimina "module" después de usarlo -->
+  (function () {
+    var exp = window.module.exports || {};
+    window.Docxtemplater = exp.Docxtemplater || exp.default || exp;
+    window.module  = window.__savedModule;
+    window.exports = window.__savedExports;
+    delete window.__savedModule;
+    delete window.__savedExports;
+  })();
 </script>
 
-<!-- Módulo de imágenes: ahora cargará correctamente como variable global -->
+<!-- ============ ImageModule (aislado) ============ -->
+<script>
+  window.__savedModule  = window.module;
+  window.__savedExports = window.exports;
+  window.module  = { exports: {} };
+  window.exports = window.module.exports;
+</script>
 <script src="imagemodule.min.js"></script>
+<script>
+  (function () {
+    var exp = window.module.exports || {};
+    window.ImageModule = exp.ImageModule || exp.default || exp;
+    window.module  = window.__savedModule;
+    window.exports = window.__savedExports;
+    delete window.__savedModule;
+    delete window.__savedExports;
+  })();
+</script>
 
-<!-- FileSaver: este funciona normal -->
+<!-- ============ FileSaver: UMD, se carga solo ============ -->
 <script src="FileSaver.min.js"></script>
 
 <script>
