@@ -378,7 +378,7 @@ async function generarDocumento() {
       getSize: () => [350, 220]
     });
 
-    const doc = new Docxtemplater(zip, {
+    const doc = new window.docxtemplater(zip, {
       modules: [imageModule],
       paragraphLoop: true,
       linebreaks: true,
