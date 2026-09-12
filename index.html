@@ -165,7 +165,7 @@
   </div>
 </div>
 
-<!-- ============ 7. IMÁGENES (autogeneradas) ============ -->
+<!-- ============ 7. IMÁGENES ============ -->
 <div class="section">
   <h2>7. Imágenes y documentos escaneados</h2>
   <p style="font-size:13px;color:#666">
@@ -179,9 +179,11 @@
 </button>
 <div class="status" id="status"></div>
 
-<!-- LIBRERÍAS -->
+<!-- ============================================================
+     LIBRERÍAS (orden importante, no cambiar)
+     ============================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.47.0/build/docxtemplater.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.2/docxtemplater.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/open-docxtemplater-image-module@1.0.3/build/imagemodule.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
@@ -193,23 +195,23 @@
 // con los marcadores {%%id} de la plantilla Word.
 // ============================================================
 const imagenesConfig = [
-  { id: 'img_cedula_conductor',       label: 'Cédula del conductor',         doble: true  },
-  { id: 'img_licencia',               label: 'Licencia del conductor',       doble: true  },
-  { id: 'img_tarjeta_propiedad',      label: 'Tarjeta de propiedad vehículo',doble: true  },
-  { id: 'img_tarjeta_remolque',       label: 'Tarjeta de propiedad remolque',doble: false },
-  { id: 'img_soat',                   label: 'SOAT',                         doble: true  },
-  { id: 'img_revision_tecno',         label: 'Revisión Tecno-mecánica',      doble: true  },
-  { id: 'img_vehiculo_frontal',       label: 'Foto vehículo - Frontal',      doble: false },
-  { id: 'img_vehiculo_lateral',       label: 'Foto vehículo - Lateral',      doble: false },
-  { id: 'img_vehiculo_espaldar',      label: 'Foto vehículo - Espaldar',     doble: false },
-  { id: 'img_planilla_ss',            label: 'Planilla Seguridad Social',    doble: false },
-  { id: 'img_foto_conductor',         label: 'Foto del conductor',           doble: false },
-  { id: 'img_cedula_propietario',     label: 'Cédula del propietario',       doble: true  },
-  { id: 'img_rut_propietario',        label: 'RUT del propietario',          doble: true  },
-  { id: 'img_cert_bancaria_propietario', label: 'Certificación bancaria propietario', doble: false },
-  { id: 'img_autorizacion_pagos',     label: 'Autorización de pagos',        doble: false },
-  { id: 'img_rut_tenedor',            label: 'RUT del tenedor',              doble: true  },
-  { id: 'img_cert_bancaria_tenedor',  label: 'Certificación bancaria tenedor', doble: false }
+  { id: 'img_cedula_conductor',         label: 'Cédula del conductor',           doble: true  },
+  { id: 'img_licencia',                 label: 'Licencia del conductor',         doble: true  },
+  { id: 'img_tarjeta_propiedad',        label: 'Tarjeta de propiedad vehículo',  doble: true  },
+  { id: 'img_tarjeta_remolque',         label: 'Tarjeta de propiedad remolque',  doble: false },
+  { id: 'img_soat',                     label: 'SOAT',                           doble: true  },
+  { id: 'img_revision_tecno',           label: 'Revisión Tecno-mecánica',        doble: true  },
+  { id: 'img_vehiculo_frontal',         label: 'Foto vehículo - Frontal',        doble: false },
+  { id: 'img_vehiculo_lateral',         label: 'Foto vehículo - Lateral',        doble: false },
+  { id: 'img_vehiculo_espaldar',        label: 'Foto vehículo - Espaldar',       doble: false },
+  { id: 'img_planilla_ss',              label: 'Planilla Seguridad Social',      doble: false },
+  { id: 'img_foto_conductor',           label: 'Foto del conductor',             doble: false },
+  { id: 'img_cedula_propietario',       label: 'Cédula del propietario',         doble: true  },
+  { id: 'img_rut_propietario',          label: 'RUT del propietario',            doble: true  },
+  { id: 'img_cert_bancaria_propietario',label: 'Certificación bancaria propietario', doble: false },
+  { id: 'img_autorizacion_pagos',       label: 'Autorización de pagos',          doble: false },
+  { id: 'img_rut_tenedor',              label: 'RUT del tenedor',                doble: true  },
+  { id: 'img_cert_bancaria_tenedor',    label: 'Certificación bancaria tenedor', doble: false }
 ];
 
 // --- Generar inputs dinámicamente ---
@@ -285,7 +287,7 @@ function mostrarEstado(msg, tipo) {
 }
 
 // ============================================================
-// GENERACIÓN
+// GENERACIÓN DEL DOCUMENTO
 // ============================================================
 async function generarDocumento() {
   const btn = document.getElementById('btnGenerar');
@@ -293,11 +295,19 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
+    // 1. Verificar que las librerías cargaron
+    if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
+    if (typeof Docxtemplater === 'undefined') throw new Error('Docxtemplater no se cargó.');
+    if (typeof ImageModule === 'undefined') throw new Error('ImageModule no se cargó.');
+    if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó.');
+
+    // 2. Descargar la plantilla
     const respuesta = await fetch('plantilla.docx');
     if (!respuesta.ok) throw new Error('No se encontró plantilla.docx en el repositorio.');
     const arrayBuffer = await respuesta.arrayBuffer();
     const zip = new PizZip(arrayBuffer);
 
+    // 3. Configurar módulo de imágenes
     const imageModule = new ImageModule({
       centered: false,
       getImage: (tagValue) => base64ToUint8Array(tagValue),
@@ -311,7 +321,7 @@ async function generarDocumento() {
       nullGetter: () => ""
     });
 
-    // --- Procesar todas las imágenes (dobles y simples) ---
+    // 4. Procesar todas las imágenes
     const imagenes = {};
     for (const cfg of imagenesConfig) {
       if (cfg.doble) {
@@ -325,7 +335,7 @@ async function generarDocumento() {
       }
     }
 
-    // --- Familiares ---
+    // 5. Familiares
     const familiares = [];
     for (let i = 1; i <= 3; i++) {
       const n = val('fam' + i + '_nombre');
@@ -338,7 +348,7 @@ async function generarDocumento() {
       }
     }
 
-    // --- Datos de texto ---
+    // 6. Datos de texto
     const datos = {
       evaluado_nombres: val('evaluado_nombres'),
       evaluado_cedula: val('evaluado_cedula'),
@@ -385,12 +395,13 @@ async function generarDocumento() {
 
       familiares: familiares,
 
-      // Imágenes
       ...imagenes
     };
 
+    // 7. Renderizar
     doc.render(datos);
 
+    // 8. Descargar
     const salida = doc.getZip().generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
