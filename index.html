@@ -186,23 +186,18 @@
 <!-- PizZip: funciona normal en el navegador -->
 <script src="pizzip.js"></script>
 
-<!-- Docxtemplater: es CommonJS, necesita "module" para exportar -->
+<!-- Docxtemplater: necesita "module" para exportar -->
 <script>var module = { exports: {} };</script>
 <script src="docxtemplater.js"></script>
 <script>
   window.Docxtemplater = module.exports.Docxtemplater || module.exports;
+  delete window.module; <!-- ¡IMPORTANTE! Se elimina "module" después de usarlo -->
 </script>
 
-<!-- Módulo de imágenes: también es CommonJS, hacemos lo mismo -->
-<script>module = { exports: {} };</script>
+<!-- Módulo de imágenes: ahora cargará correctamente como variable global -->
 <script src="imagemodule.min.js"></script>
-<script>
-  window.ImageModule = module.exports.ImageModule
-                     || module.exports.default
-                     || module.exports;
-</script>
 
-<!-- FileSaver: este sí funciona normal -->
+<!-- FileSaver: este funciona normal -->
 <script src="FileSaver.min.js"></script>
 
 <script>
