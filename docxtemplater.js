@@ -209,7 +209,22 @@ function mergeObjects() {
 
 function xml2str(xmlNode) {
   var a = new XMLSerializer();
-  return a.serializeToString(xmlNode).replace(/xmlns(:[a-z0-9]+)?="" ?/g, "");
+  var xmlString;
+
+  try {
+    xmlString = a.serializeToString(xmlNode);
+  } catch (error) {
+    // The free ImageModule bundle creates XML nodes with its embedded xmldom
+    // implementation. Browser XMLSerializer rejects those foreign nodes, but
+    // xmldom exposes the correct serialized XML through node.toString().
+    if (!xmlNode || typeof xmlNode.toString !== "function") {
+      throw error;
+    }
+
+    xmlString = xmlNode.toString();
+  }
+
+  return xmlString.replace(/xmlns(:[a-z0-9]+)?="" ?/g, "");
 }
 
 function str2xml(str) {
