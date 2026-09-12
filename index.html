@@ -183,32 +183,46 @@
      LIBRERÍAS (cargadas desde la raíz del repositorio)
      ============================================================ -->
 
-<!-- xmldom se carga PRIMERO para reemplazar el DOMParser y XMLSerializer nativos
-     y evitar conflictos con los nodos creados por el módulo de imágenes. -->
+<!-- xmldom ANTIGUO (bundle navegador, sin require) -->
 <script src="xmldom.js"></script>
+
+<!-- Parches de compatibilidad: DEBEN ir ANTES de docxtemplater -->
 <script>
-  // Reemplazar los objetos nativos por los de xmldom para unificar la implementación
-  if (window.xmldom) {
-    window.DOMParser = window.xmldom.DOMParser;
-    window.XMLSerializer = window.xmldom.XMLSerializer;
-  }
+  // --- Guardar referencias nativas antes de nada ---
+  var __NativeDOMParser = window.DOMParser;
+  var __NativeXMLSerializer = window.XMLSerializer;
+
+  // --- 1. Detectar si xmldom reemplazó los globales ---
+  // En la versión antigua, cargar el script define directamente window.DOMParser
+  // y window.XMLSerializer con las clases de xmldom.
+  console.log('DOMParser actual:', window.DOMParser);
+  console.log('XMLSerializer actual:', window.XMLSerializer);
+
+  // --- 2. Parche del XMLSerializer: acepta nodos nativos Y de xmldom ---
+  var NativeXS = window.XMLSerializer;
+  window.XMLSerializer = function () {
+    this._native = new NativeXS();
+  };
+  window.XMLSerializer.prototype.serializeToString = function (node) {
+    try {
+      return this._native.serializeToString(node);
+    } catch (e) {
+      if (node && typeof node.toString === 'function') {
+        try { return node.toString(); } catch (e2) {}
+      }
+      throw e;
+    }
+  };
 </script>
 
+<!-- Resto de librerías (el orden importa) -->
 <script src="pizzip.js"></script>
 <script src="docxtemplater.js"></script>
 <script src="imagemodule.min.js"></script>
 <script src="FileSaver.min.js"></script>
 
 <script>
-// --- Verificar que las 4 librerías cargaron ---
-console.log('PizZip:', typeof window.PizZip);
-console.log('docxtemplater:', typeof window.docxtemplater);
-console.log('ImageModule:', typeof window.ImageModule);
-console.log('saveAs:', typeof window.saveAs);
-console.log('DOMParser (xmldom):', typeof window.DOMParser);
-console.log('XMLSerializer (xmldom):', typeof window.XMLSerializer);
-
-// Alias para poder usar Docxtemplater con D mayúscula en el resto del código
+// Alias para usar Docxtemplater con D mayúscula
 window.Docxtemplater = window.docxtemplater;
 
 // ============================================================
@@ -315,7 +329,6 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
-    // 1. Verificar librerías
     if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
     if (typeof Docxtemplater === 'undefined' || typeof Docxtemplater !== 'function') {
       throw new Error('Docxtemplater no se cargó correctamente.');
@@ -323,13 +336,11 @@ async function generarDocumento() {
     if (typeof ImageModule === 'undefined') throw new Error('ImageModule no se cargó.');
     if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó.');
 
-    // 2. Descargar la plantilla
     const respuesta = await fetch('plantilla.docx');
     if (!respuesta.ok) throw new Error('No se encontró plantilla.docx en el repositorio.');
     const arrayBuffer = await respuesta.arrayBuffer();
     const zip = new PizZip(arrayBuffer);
 
-    // 3. Configurar módulo de imágenes
     const imageModule = new ImageModule({
       centered: false,
       getImage: (tagValue) => base64ToUint8Array(tagValue),
@@ -343,12 +354,7 @@ async function generarDocumento() {
       nullGetter: () => ""
     });
 
-    // ============================================================
-    // PARCHE DE COMPATIBILIDAD DE SCOPE MANAGER
-    // El módulo de imágenes viejo llama getValue(tag) sin pasar meta.
-    // El docxtemplater nuevo requiere meta.part. Aquí inyectamos meta={}
-    // automáticamente cuando no se pasa.
-    // ============================================================
+    // Parche de compatibilidad del scopeManager
     const _origGetScopeManager = doc.getScopeManager;
     doc.getScopeManager = function(to, currentFile, tags) {
       const sm = _origGetScopeManager.call(this, to, currentFile, tags);
@@ -362,7 +368,7 @@ async function generarDocumento() {
       return sm;
     };
 
-    // 4. Procesar imágenes
+    // Procesar imágenes
     const imagenes = {};
     for (const cfg of imagenesConfig) {
       if (cfg.doble) {
@@ -376,7 +382,7 @@ async function generarDocumento() {
       }
     }
 
-    // 5. Familiares
+    // Familiares
     const familiares = [];
     for (let i = 1; i <= 3; i++) {
       const n = val('fam' + i + '_nombre');
@@ -389,7 +395,7 @@ async function generarDocumento() {
       }
     }
 
-    // 6. Datos de texto
+    // Datos de texto
     const datos = {
       evaluado_nombres: val('evaluado_nombres'),
       evaluado_cedula: val('evaluado_cedula'),
@@ -435,14 +441,11 @@ async function generarDocumento() {
       gps_clave: val('gps_clave'),
 
       familiares: familiares,
-
       ...imagenes
     };
 
-    // 7. Renderizar
     doc.render(datos);
 
-    // 8. Descargar
     const salida = doc.getZip().generate({
       type: 'blob',
       mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
