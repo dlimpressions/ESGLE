@@ -183,47 +183,41 @@
      LIBRERÍAS (cargadas desde la raíz del repositorio)
      ============================================================ -->
 
-<!-- xmldom ANTIGUO (bundle navegador, sin require) -->
-<script src="xmldom.js"></script>
-
-<!-- Parches de compatibilidad: DEBEN ir ANTES de docxtemplater -->
+<!--
+  No cargar xmldom.js aquí: ese archivo es una versión para Node.js y ejecuta
+  require(), que no existe en el navegador. Docxtemplater funciona con las
+  APIs XML nativas del navegador y ImageModule ya incluye sus dependencias.
+-->
+<script src="pizzip.js"></script>
 <script>
-  // --- Guardar referencias nativas antes de nada ---
-  var __NativeDOMParser = window.DOMParser;
-  var __NativeXMLSerializer = window.XMLSerializer;
-
-  // --- 1. Detectar si xmldom reemplazó los globales ---
-  // En la versión antigua, cargar el script define directamente window.DOMParser
-  // y window.XMLSerializer con las clases de xmldom.
-  console.log('DOMParser actual:', window.DOMParser);
-  console.log('XMLSerializer actual:', window.XMLSerializer);
-
-  // --- 2. Parche del XMLSerializer: acepta nodos nativos Y de xmldom ---
-  var NativeXS = window.XMLSerializer;
-  window.XMLSerializer = function () {
-    this._native = new NativeXS();
-  };
-  window.XMLSerializer.prototype.serializeToString = function (node) {
-    try {
-      return this._native.serializeToString(node);
-    } catch (e) {
-      if (node && typeof node.toString === 'function') {
-        try { return node.toString(); } catch (e2) {}
-      }
-      throw e;
-    }
-  };
+// ImageModule crea algunos documentos XML con su propio DOM interno. Al final
+// Docxtemplater los sincroniza con XMLSerializer, pero el serializador nativo
+// solo acepta nodos del navegador. Este adaptador conserva el serializador
+// nativo para esos nodos y usa toString() para los nodos internos de ImageModule.
+// Debe instalarse antes de cargar Docxtemplater porque el bundle guarda la
+// referencia a XMLSerializer durante su inicialización.
+const NativeXMLSerializer = window.XMLSerializer;
+window.XMLSerializer = function XMLSerializerCompatible() {
+  this.nativeSerializer = new NativeXMLSerializer();
+};
+window.XMLSerializer.prototype.serializeToString = function serializeToString(node) {
+  try {
+    return this.nativeSerializer.serializeToString(node);
+  } catch (error) {
+    if (node && typeof node.toString === 'function') return node.toString();
+    throw error;
+  }
+};
 </script>
 
-<!-- Resto de librerías (el orden importa) -->
-<script src="pizzip.js"></script>
 <script src="docxtemplater.js"></script>
 <script src="imagemodule.min.js"></script>
 <script src="FileSaver.min.js"></script>
 
 <script>
-// Alias para usar Docxtemplater con D mayúscula
-window.Docxtemplater = window.docxtemplater;
+// El bundle expone la librería como `docxtemplater`; se conserva un único alias
+// para utilizar el nombre del constructor de forma consistente en esta página.
+const Docxtemplater = window.docxtemplater;
 
 // ============================================================
 // CONFIGURACIÓN DE IMÁGENES
@@ -284,6 +278,7 @@ function val(id) {
 }
 
 function base64ToUint8Array(base64) {
+  if (!base64) return new Uint8Array();
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -291,11 +286,17 @@ function base64ToUint8Array(base64) {
 }
 
 function comprimirImagen(file, maxWidth = 1200, quality = 0.75) {
-  return new Promise((resolve) => {
-    if (!file) return resolve("");
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve('');
+    if (!file.type.startsWith('image/')) {
+      reject(new Error(`El archivo “${file.name}” no es una imagen válida.`));
+      return;
+    }
     const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`No se pudo leer la imagen “${file.name}”.`));
     reader.onload = (e) => {
       const img = new Image();
+      img.onerror = () => reject(new Error(`No se pudo procesar la imagen “${file.name}”.`));
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let w = img.width, h = img.height;
@@ -303,7 +304,12 @@ function comprimirImagen(file, maxWidth = 1200, quality = 0.75) {
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
         canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error(`No se pudo comprimir la imagen “${file.name}”.`));
+            return;
+          }
           const fr = new FileReader();
+          fr.onerror = () => reject(new Error(`No se pudo preparar la imagen “${file.name}”.`));
           fr.onload = () => resolve(fr.result.split(',')[1]);
           fr.readAsDataURL(blob);
         }, 'image/jpeg', quality);
@@ -329,6 +335,9 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
+    if (window.location.protocol === 'file:') {
+      throw new Error('Abra la aplicación desde un servidor web (por ejemplo, GitHub Pages); no directamente como archivo local.');
+    }
     if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
     if (typeof Docxtemplater === 'undefined' || typeof Docxtemplater !== 'function') {
       throw new Error('Docxtemplater no se cargó correctamente.');
@@ -353,20 +362,6 @@ async function generarDocumento() {
       linebreaks: true,
       nullGetter: () => ""
     });
-
-    // Parche de compatibilidad del scopeManager
-    const _origGetScopeManager = doc.getScopeManager;
-    doc.getScopeManager = function(to, currentFile, tags) {
-      const sm = _origGetScopeManager.call(this, to, currentFile, tags);
-      if (sm && !sm.__getValuePatched) {
-        const _origGetValue = sm.getValue;
-        sm.getValue = function(tag, meta) {
-          return _origGetValue.call(this, tag, meta || {});
-        };
-        sm.__getValuePatched = true;
-      }
-      return sm;
-    };
 
     // Procesar imágenes
     const imagenes = {};
