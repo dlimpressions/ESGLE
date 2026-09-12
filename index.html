@@ -181,82 +181,25 @@
 
 <!-- ============================================================
      LIBRERÍAS (cargadas desde la raíz del repositorio)
-     Orden importante, no cambiar
+     Sin trucos: cada archivo expone su propia variable global.
      ============================================================ -->
-<!-- PizZip -->
 <script src="pizzip.js"></script>
-
-<!-- ============ Docxtemplater ============ -->
-<script>
-  window.__m = window.module; window.__e = window.exports;
-  window.module = { exports: {} };
-  window.exports = window.module.exports;
-</script>
 <script src="docxtemplater.js"></script>
-<script>
-  (function () {
-    var exp = window.module.exports || {};
-    // Detectar la clase en cualquier propiedad posible
-    var Clase = exp.Docxtemplater
-              || exp.default
-              || (exp.default && exp.default.Docxtemplater)
-              || exp;
-    // Si quedó envuelto dentro de otra capa
-    if (Clase && typeof Clase !== 'function' && typeof Clase === 'object') {
-      var keys = Object.keys(Clase);
-      for (var i = 0; i < keys.length; i++) {
-        if (typeof Clase[keys[i]] === 'function' && keys[i].toLowerCase().indexOf('docxtemplater') !== -1) {
-          Clase = Clase[keys[i]];
-          break;
-        }
-      }
-    }
-    window.Docxtemplater = Clase;
-    console.log('Docxtemplater cargado como:', typeof window.Docxtemplater, window.Docxtemplater);
-    window.module = window.__m; window.exports = window.__e;
-    delete window.__m; delete window.__e;
-  })();
-</script>
-
-<!-- ============ ImageModule ============ -->
-<script>
-  window.__m = window.module; window.__e = window.exports;
-  window.module = { exports: {} };
-  window.exports = window.module.exports;
-</script>
 <script src="imagemodule.min.js"></script>
-<script>
-  (function () {
-    var exp = window.module.exports || {};
-    var Clase = exp.ImageModule
-              || exp.default
-              || (exp.default && exp.default.ImageModule)
-              || exp;
-    if (Clase && typeof Clase !== 'function' && typeof Clase === 'object') {
-      var keys = Object.keys(Clase);
-      for (var i = 0; i < keys.length; i++) {
-        if (typeof Clase[keys[i]] === 'function' && keys[i].toLowerCase().indexOf('image') !== -1) {
-          Clase = Clase[keys[i]];
-          break;
-        }
-      }
-    }
-    window.ImageModule = Clase;
-    console.log('ImageModule cargado como:', typeof window.ImageModule, window.ImageModule);
-    window.module = window.__m; window.exports = window.__e;
-    delete window.__m; delete window.__e;
-  })();
-</script>
-
-<!-- FileSaver -->
 <script src="FileSaver.min.js"></script>
 
 <script>
+// --- Verificar que las 4 librerías cargaron ---
+console.log('PizZip:', typeof window.PizZip);
+console.log('docxtemplater (window.docxtemplater):', typeof window.docxtemplater);
+console.log('ImageModule:', typeof window.ImageModule);
+console.log('saveAs:', typeof window.saveAs);
+
+// Alias para usar Docxtemplater con D mayúscula en el resto del código
+window.Docxtemplater = window.docxtemplater;
+
 // ============================================================
 // CONFIGURACIÓN DE IMÁGENES
-// Cambia "doble: true" a "doble: false" si un documento ya no
-// necesita frente y reverso. Los IDs deben coincidir EXACTOS
-// con los marcadores {%%id} de la plantilla Word.
 // ============================================================
 const imagenesConfig = [
   { id: 'img_cedula_conductor',         label: 'Cédula del conductor',           doble: true  },
@@ -359,9 +302,11 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
-    // 1. Verificar que las librerías cargaron
+    // 1. Verificar librerías
     if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
-    if (typeof Docxtemplater === 'undefined') throw new Error('Docxtemplater no se cargó.');
+    if (typeof Docxtemplater === 'undefined' || typeof Docxtemplater !== 'function') {
+      throw new Error('Docxtemplater no se cargó correctamente.');
+    }
     if (typeof ImageModule === 'undefined') throw new Error('ImageModule no se cargó.');
     if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó.');
 
@@ -378,14 +323,33 @@ async function generarDocumento() {
       getSize: () => [350, 220]
     });
 
-    const doc = new window.docxtemplater(zip, {
+    const doc = new Docxtemplater(zip, {
       modules: [imageModule],
       paragraphLoop: true,
       linebreaks: true,
       nullGetter: () => ""
     });
 
-    // 4. Procesar todas las imágenes
+    // ============================================================
+    // PARCHE DE COMPATIBILIDAD
+    // El módulo de imágenes viejo llama a getValue(tag) sin pasar meta.
+    // El docxtemplater nuevo requiere meta.part. Aquí inyectamos meta={}
+    // automáticamente cuando el módulo no lo pasa.
+    // ============================================================
+    const _origGetScopeManager = doc.getScopeManager;
+    doc.getScopeManager = function(to, currentFile, tags) {
+      const sm = _origGetScopeManager.call(this, to, currentFile, tags);
+      if (sm && !sm.__getValuePatched) {
+        const _origGetValue = sm.getValue;
+        sm.getValue = function(tag, meta) {
+          return _origGetValue.call(this, tag, meta || {});
+        };
+        sm.__getValuePatched = true;
+      }
+      return sm;
+    };
+
+    // 4. Procesar imágenes
     const imagenes = {};
     for (const cfg of imagenesConfig) {
       if (cfg.doble) {
