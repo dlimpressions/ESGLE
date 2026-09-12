@@ -180,37 +180,20 @@
 <div class="status" id="status"></div>
 
 <!-- ============================================================
-     PARCHE DE COMPATIBILIDAD DEL XMLSerializer
-     docxtemplater usa el XMLSerializer nativo del navegador.
-     imagemodule.min.js crea nodos con la librería xmldom (ajenos al DOM).
-     Este parche permite serializar ambos tipos de nodos.
-     DEBE ejecutarse ANTES de cargar docxtemplater.js.
-     ============================================================ -->
-<script>
-(function () {
-  var Native = window.XMLSerializer;
-  window.XMLSerializer = function () {
-    this._native = new Native();
-  };
-  window.XMLSerializer.prototype.serializeToString = function (node) {
-    try {
-      return this._native.serializeToString(node);
-    } catch (e) {
-      // Nodo de xmldom: el navegador no lo reconoce como Node.
-      if (node && typeof node.toString === 'function') {
-        try {
-          return node.toString();
-        } catch (e2) { /* cae al throw original */ }
-      }
-      throw e;
-    }
-  };
-})();
-</script>
-
-<!-- ============================================================
      LIBRERÍAS (cargadas desde la raíz del repositorio)
      ============================================================ -->
+
+<!-- xmldom se carga PRIMERO para reemplazar el DOMParser y XMLSerializer nativos
+     y evitar conflictos con los nodos creados por el módulo de imágenes. -->
+<script src="xmldom.js"></script>
+<script>
+  // Reemplazar los objetos nativos por los de xmldom para unificar la implementación
+  if (window.xmldom) {
+    window.DOMParser = window.xmldom.DOMParser;
+    window.XMLSerializer = window.xmldom.XMLSerializer;
+  }
+</script>
+
 <script src="pizzip.js"></script>
 <script src="docxtemplater.js"></script>
 <script src="imagemodule.min.js"></script>
@@ -222,6 +205,8 @@ console.log('PizZip:', typeof window.PizZip);
 console.log('docxtemplater:', typeof window.docxtemplater);
 console.log('ImageModule:', typeof window.ImageModule);
 console.log('saveAs:', typeof window.saveAs);
+console.log('DOMParser (xmldom):', typeof window.DOMParser);
+console.log('XMLSerializer (xmldom):', typeof window.XMLSerializer);
 
 // Alias para poder usar Docxtemplater con D mayúscula en el resto del código
 window.Docxtemplater = window.docxtemplater;
