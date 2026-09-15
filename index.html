@@ -51,6 +51,9 @@
     outline: none; border-color: #1a3d6b; background: white;
     box-shadow: 0 0 0 3px rgba(26,61,107,0.12);
   }
+  input:disabled, select:disabled {
+    background: #f1f5f9; color: #94a3b8; cursor: not-allowed;
+  }
   select { cursor: pointer; }
 
   .row { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -74,6 +77,19 @@
   .status.ok { background: #dcfce7; color: #166534; display: block; border: 1px solid #86efac; }
   .status.err { background: #fee2e2; color: #991b1b; display: block; border: 1px solid #fca5a5; }
   .status.load { background: #dbeafe; color: #1e40af; display: block; border: 1px solid #93c5fd; }
+
+  .copiar-label {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; margin-bottom: 18px;
+    background: #eff6ff; border: 1.5px solid #bfdbfe;
+    border-radius: 8px; cursor: pointer; font-weight: 600;
+    color: #1e40af; font-size: 14px; transition: background 0.15s;
+    margin-top: 0;
+  }
+  .copiar-label:hover { background: #dbeafe; }
+  .copiar-label input[type="checkbox"] {
+    width: 18px; height: 18px; cursor: pointer; accent-color: #1a3d6b;
+  }
 </style>
 </head>
 <body>
@@ -126,9 +142,10 @@
     </div>
     <div>
       <label>Ciudad / Municipio de nacimiento</label>
-      <select id="evaluado_ciudad" disabled>
+      <select id="evaluado_ciudad" onchange="cambiarCiudad('evaluado')" disabled>
         <option value="">-- Primero seleccione departamento --</option>
       </select>
+      <input type="text" id="evaluado_ciudad_manual" placeholder="Escriba el municipio" style="display:none; margin-top:6px;">
     </div>
   </div>
   <label>Marcar como conductor (X o vacío)</label>
@@ -138,6 +155,10 @@
 <!-- ============ 2. PROPIETARIO ============ -->
 <div class="section">
   <h2><span class="num">2</span> Datos del Propietario</h2>
+  <label class="copiar-label">
+    <input type="checkbox" id="propietario_copiar" onchange="toggleCopiar('evaluado', 'propietario', this)">
+    Los datos son los mismos del conductor (Evaluado)
+  </label>
   <div class="row">
     <div><label>Nombres y apellidos</label><input type="text" id="propietario_nombres"></div>
     <div><label>Número de cédula</label><input type="text" id="propietario_cedula"></div>
@@ -157,9 +178,10 @@
     </div>
     <div>
       <label>Ciudad / Municipio de nacimiento</label>
-      <select id="propietario_ciudad" disabled>
+      <select id="propietario_ciudad" onchange="cambiarCiudad('propietario')" disabled>
         <option value="">-- Primero seleccione departamento --</option>
       </select>
+      <input type="text" id="propietario_ciudad_manual" placeholder="Escriba el municipio" style="display:none; margin-top:6px;">
     </div>
   </div>
   <div class="row">
@@ -172,6 +194,10 @@
 <!-- ============ 3. TENEDOR ============ -->
 <div class="section">
   <h2><span class="num">3</span> Datos del Tenedor</h2>
+  <label class="copiar-label">
+    <input type="checkbox" id="tenedor_copiar" onchange="toggleCopiar('evaluado', 'tenedor', this)">
+    Los datos son los mismos del conductor (Evaluado)
+  </label>
   <div class="row">
     <div><label>Nombres y apellidos</label><input type="text" id="tenedor_nombres"></div>
     <div><label>Número de cédula</label><input type="text" id="tenedor_cedula"></div>
@@ -191,9 +217,10 @@
     </div>
     <div>
       <label>Ciudad / Municipio de nacimiento</label>
-      <select id="tenedor_ciudad" disabled>
+      <select id="tenedor_ciudad" onchange="cambiarCiudad('tenedor')" disabled>
         <option value="">-- Primero seleccione departamento --</option>
       </select>
+      <input type="text" id="tenedor_ciudad_manual" placeholder="Escriba el municipio" style="display:none; margin-top:6px;">
     </div>
   </div>
   <label>Marcar "Tenedor" (X)</label>
@@ -326,7 +353,12 @@ function inicializarDepartamentos() {
 function actualizarCiudades(prefijo) {
   const depto = document.getElementById(prefijo + '_departamento').value;
   const ciudadSel = document.getElementById(prefijo + '_ciudad');
+  const manualInput = document.getElementById(prefijo + '_ciudad_manual');
   ciudadSel.innerHTML = '';
+  if (manualInput) {
+    manualInput.style.display = 'none';
+    manualInput.value = '';
+  }
   if (!depto) {
     ciudadSel.disabled = true;
     ciudadSel.innerHTML = '<option value="">-- Primero seleccione departamento --</option>';
@@ -334,17 +366,103 @@ function actualizarCiudades(prefijo) {
   }
   const data = datosColombia.find(d => d.departamento === depto);
   if (!data) return;
-  ciudadSel.disabled = false;
+
+  // Verificar si el campo debe permanecer deshabilitado (por el check de copiar)
+  const copiarId = prefijo === 'propietario' ? 'propietario_copiar'
+                 : prefijo === 'tenedor' ? 'tenedor_copiar' : null;
+  const debeEstarDeshabilitado = copiarId ? document.getElementById(copiarId)?.checked : false;
+
+  ciudadSel.disabled = debeEstarDeshabilitado;
   ciudadSel.innerHTML = '<option value="">-- Seleccione ciudad --</option>';
   data.ciudades.slice().sort().forEach(c => {
     const opt = document.createElement('option');
-    opt.value = c + ' / ' + depto;
-    opt.textContent = c + ' / ' + depto;
+    opt.value = c;
+    opt.textContent = c;
     ciudadSel.appendChild(opt);
   });
+  const optOtro = document.createElement('option');
+  optOtro.value = '__MANUAL__';
+  optOtro.textContent = 'Otro (escribir manualmente)';
+  ciudadSel.appendChild(optOtro);
 }
 
-inicializarDepartamentos();
+function cambiarCiudad(prefijo) {
+  const ciudadSel = document.getElementById(prefijo + '_ciudad');
+  const manualInput = document.getElementById(prefijo + '_ciudad_manual');
+  if (!manualInput) return;
+  if (ciudadSel.value === '__MANUAL__') {
+    manualInput.style.display = 'block';
+    manualInput.disabled = ciudadSel.disabled;
+  } else {
+    manualInput.style.display = 'none';
+    manualInput.value = '';
+  }
+}
+
+// ============================================================
+// COPIAR DATOS DEL EVALUADO → PROPIETARIO / TENEDOR
+// ============================================================
+const CAMPOS_COPIAR = ['nombres', 'cedula', 'telefono', 'correo', 'direccion', 'departamento', 'ciudad', 'ciudad_manual'];
+
+function toggleCopiar(origen, destino, checkbox) {
+  CAMPOS_COPIAR.forEach(campo => {
+    const el = document.getElementById(destino + '_' + campo);
+    if (el) el.disabled = checkbox.checked;
+  });
+
+  // Mantener el comportamiento de la ciudad (siempre deshabilitada si no se ha seleccionado departamento)
+  if (!checkbox.checked) {
+    const depto = document.getElementById(destino + '_departamento').value;
+    if (!depto) {
+      document.getElementById(destino + '_ciudad').disabled = true;
+    }
+  }
+
+  if (checkbox.checked) {
+    copiarDatos(origen, destino);
+  }
+}
+
+function copiarDatos(origen, destino) {
+  // Campos de texto
+  ['nombres', 'cedula', 'telefono', 'correo', 'direccion'].forEach(campo => {
+    const origenEl = document.getElementById(origen + '_' + campo);
+    const destinoEl = document.getElementById(destino + '_' + campo);
+    if (origenEl && destinoEl) destinoEl.value = origenEl.value;
+  });
+
+  // Departamento
+  const deptoOrigen = document.getElementById(origen + '_departamento').value;
+  const deptoDestino = document.getElementById(destino + '_departamento');
+  deptoDestino.value = deptoOrigen;
+  actualizarCiudades(destino);
+
+  // Ciudad (valor del select interno)
+  const ciudadOrigenSel = document.getElementById(origen + '_ciudad');
+  const ciudadDestinoSel = document.getElementById(destino + '_ciudad');
+  ciudadDestinoSel.value = ciudadOrigenSel.value;
+
+  // Ciudad manual
+  const manualOrigen = document.getElementById(origen + '_ciudad_manual');
+  const manualDestino = document.getElementById(destino + '_ciudad_manual');
+  if (manualOrigen && manualDestino) {
+    manualDestino.value = manualOrigen.value;
+    if (ciudadOrigenSel.value === '__MANUAL__') {
+      manualDestino.style.display = 'block';
+    } else {
+      manualDestino.style.display = 'none';
+    }
+  }
+}
+
+function sincronizarCopias() {
+  if (document.getElementById('propietario_copiar').checked) {
+    copiarDatos('evaluado', 'propietario');
+  }
+  if (document.getElementById('tenedor_copiar').checked) {
+    copiarDatos('evaluado', 'tenedor');
+  }
+}
 
 // ============================================================
 // UTILIDADES
@@ -354,11 +472,40 @@ function val(id) {
   return el ? el.value.trim() : '';
 }
 
+// Devuelve el valor final de la ciudad según el estado de los campos
+function valorCiudad(prefijo) {
+  const ciudadSel = document.getElementById(prefijo + '_ciudad');
+  const manualInput = document.getElementById(prefijo + '_ciudad_manual');
+  const depto = document.getElementById(prefijo + '_departamento').value;
+
+  if (!depto) return '';
+  if (ciudadSel.value === '__MANUAL__') {
+    const manual = manualInput ? manualInput.value.trim() : '';
+    return manual ? manual + ' / ' + depto : '';
+  }
+  return ciudadSel.value ? ciudadSel.value + ' / ' + depto : '';
+}
+
 function mostrarEstado(msg, tipo) {
   const s = document.getElementById('status');
   s.textContent = msg;
   s.className = 'status ' + tipo;
 }
+
+// ============================================================
+// INICIALIZACIÓN
+// ============================================================
+inicializarDepartamentos();
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Escuchar cambios en evaluado para sincronizar copias
+  ['nombres', 'cedula', 'telefono', 'correo', 'direccion', 'departamento', 'ciudad', 'ciudad_manual'].forEach(campo => {
+    const el = document.getElementById('evaluado_' + campo);
+    if (!el) return;
+    el.addEventListener('input', sincronizarCopias);
+    el.addEventListener('change', sincronizarCopias);
+  });
+});
 
 // ============================================================
 // GENERACIÓN DEL DOCUMENTO
@@ -369,11 +516,11 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
-    if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó. Revise que pizzip.js esté en el repositorio.');
+    if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
     if (typeof window.docxtemplater === 'undefined' || typeof window.docxtemplater !== 'function') {
-      throw new Error('Docxtemplater no se cargó. Revise que docxtemplater.js esté en el repositorio.');
+      throw new Error('Docxtemplater no se cargó correctamente.');
     }
-    if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó. Revise que FileSaver.min.js esté en el repositorio.');
+    if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó.');
 
     const respuesta = await fetch('plantilla.docx');
     if (!respuesta.ok) throw new Error('No se encontró plantilla.docx en el repositorio.');
@@ -412,7 +559,7 @@ async function generarDocumento() {
       evaluado_cedula: val('evaluado_cedula'),
       evaluado_telefono: val('evaluado_telefono'),
       evaluado_direccion: val('evaluado_direccion'),
-      evaluado_ciudad_nacimiento: val('evaluado_ciudad'),
+      evaluado_ciudad_nacimiento: valorCiudad('evaluado'),
       evaluado_correo: val('evaluado_correo'),
       evaluado_conductor_check: val('evaluado_conductor_check'),
 
@@ -421,7 +568,7 @@ async function generarDocumento() {
       propietario_cedula: val('propietario_cedula'),
       propietario_telefono: val('propietario_telefono'),
       propietario_direccion: val('propietario_direccion'),
-      propietario_ciudad_nacimiento: val('propietario_ciudad'),
+      propietario_ciudad_nacimiento: valorCiudad('propietario'),
       propietario_correo: val('propietario_correo'),
       propietario_check: val('propietario_check'),
       propietario_y_tenedor_check: val('propietario_y_tenedor_check'),
@@ -432,7 +579,7 @@ async function generarDocumento() {
       tenedor_cedula: val('tenedor_cedula'),
       tenedor_telefono: val('tenedor_telefono'),
       tenedor_direccion: val('tenedor_direccion'),
-      tenedor_ciudad_nacimiento: val('tenedor_ciudad'),
+      tenedor_ciudad_nacimiento: valorCiudad('tenedor'),
       tenedor_correo: val('tenedor_correo'),
       tenedor_check: val('tenedor_check'),
 
