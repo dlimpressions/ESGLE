@@ -93,7 +93,7 @@
   <div class="row">
     <div style="flex: 2;">
       <label>Nombre del encargado</label>
-      <input type="text" id="encargado_nombre" placeholder="">
+      <input type="text" id="encargado_nombre" placeholder="Ej: Derney Santana Almario">
     </div>
   </div>
   <label style="margin-top:18px;">Fecha de ingreso</label>
@@ -369,21 +369,18 @@ async function generarDocumento() {
   mostrarEstado('Generando documento... por favor espere.', 'load');
 
   try {
-    if (window.location.protocol === 'file:') {
-      throw new Error('Abra la aplicación desde GitHub Pages, no como archivo local.');
+    if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó. Revise que pizzip.js esté en el repositorio.');
+    if (typeof window.docxtemplater === 'undefined' || typeof window.docxtemplater !== 'function') {
+      throw new Error('Docxtemplater no se cargó. Revise que docxtemplater.js esté en el repositorio.');
     }
-    if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
-    if (typeof Docxtemplater === 'undefined' || typeof Docxtemplater !== 'function') {
-      throw new Error('Docxtemplater no se cargó correctamente.');
-    }
-    if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó.');
+    if (typeof saveAs === 'undefined') throw new Error('FileSaver no se cargó. Revise que FileSaver.min.js esté en el repositorio.');
 
     const respuesta = await fetch('plantilla.docx');
     if (!respuesta.ok) throw new Error('No se encontró plantilla.docx en el repositorio.');
     const arrayBuffer = await respuesta.arrayBuffer();
     const zip = new PizZip(arrayBuffer);
 
-    const doc = new Docxtemplater(zip, {
+    const doc = new window.docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
       nullGetter: () => ""
