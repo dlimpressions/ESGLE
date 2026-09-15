@@ -5,46 +5,108 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Generador de Estudio de Seguridad</title>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1000px;
-    margin: 0 auto; padding: 20px; background: #eef2f7; color: #333; }
-  h1 { color: #1a3d6b; text-align: center; }
-  h2 { color: #1a3d6b; background: #dbe7f5; padding: 10px 15px;
-    border-radius: 6px; margin-top: 0; font-size: 18px; }
-  .section { background: white; padding: 20px; border-radius: 10px;
-    margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-  .info { background: #fff8e1; padding: 15px; border-left: 4px solid #ffb300;
-    border-radius: 4px; margin-bottom: 20px; }
-  label { display: block; margin: 12px 0 4px; font-weight: 600;
-    color: #555; font-size: 14px; }
-  input[type="text"], input[type="email"] { width: 100%; padding: 9px;
-    border: 1px solid #cbd5e1; border-radius: 5px; font-size: 14px; }
-  .row { display: flex; gap: 15px; flex-wrap: wrap; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+    color: #1e293b; min-height: 100vh; padding: 30px 20px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, #1a3d6b 0%, #2c5a8c 100%);
+    color: white; padding: 30px 40px; border-radius: 16px;
+    margin-bottom: 30px; box-shadow: 0 10px 25px rgba(26,61,107,0.25);
+    display: flex; align-items: center; gap: 20px;
+  }
+  header .icon { font-size: 48px; }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  header p { font-size: 14px; opacity: 0.85; margin-top: 5px; }
+
+  .section {
+    background: white; border-radius: 14px; padding: 25px 30px;
+    margin-bottom: 22px; box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0; transition: box-shadow 0.2s;
+  }
+  .section:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.09); }
+  .section h2 {
+    font-size: 17px; color: #1a3d6b; margin-bottom: 18px;
+    padding-bottom: 12px; border-bottom: 2px solid #e2e8f0;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section h2 .num {
+    background: #1a3d6b; color: white; width: 28px; height: 28px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; font-weight: 700;
+  }
+
+  label { display: block; margin: 14px 0 5px; font-weight: 600;
+    color: #475569; font-size: 13px; }
+  input[type="text"], input[type="email"], select {
+    width: 100%; padding: 10px 12px; border: 1.5px solid #cbd5e1;
+    border-radius: 8px; font-size: 14px; background: #f8fafc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+  }
+  input:focus, select:focus {
+    outline: none; border-color: #1a3d6b; background: white;
+    box-shadow: 0 0 0 3px rgba(26,61,107,0.12);
+  }
+  select { cursor: pointer; }
+
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
   .row > div { flex: 1; min-width: 200px; }
-  .btn { display: block; width: 100%; padding: 18px; background: #1a3d6b;
-    color: white; border: none; border-radius: 8px; font-size: 18px;
-    font-weight: bold; cursor: pointer; margin-top: 20px; }
-  .btn:hover { background: #0f294a; }
-  .btn:disabled { background: #94a3b8; cursor: not-allowed; }
-  .status { margin-top: 15px; padding: 12px; border-radius: 6px;
-    text-align: center; font-weight: 600; display: none; }
-  .status.ok { background: #dcfce7; color: #166534; display: block; }
-  .status.err { background: #fee2e2; color: #991b1b; display: block; }
-  .status.load { background: #dbeafe; color: #1e40af; display: block; }
+
+  .btn {
+    display: block; width: 100%; padding: 20px; background: linear-gradient(135deg, #1a3d6b, #2c5a8c);
+    color: white; border: none; border-radius: 12px; font-size: 18px;
+    font-weight: 700; cursor: pointer; margin-top: 25px;
+    box-shadow: 0 6px 20px rgba(26,61,107,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(26,61,107,0.45); }
+  .btn:disabled { background: #94a3b8; box-shadow: none; transform: none; cursor: not-allowed; }
+
+  .status {
+    margin-top: 18px; padding: 14px; border-radius: 10px;
+    text-align: center; font-weight: 600; display: none;
+    font-size: 14px;
+  }
+  .status.ok { background: #dcfce7; color: #166534; display: block; border: 1px solid #86efac; }
+  .status.err { background: #fee2e2; color: #991b1b; display: block; border: 1px solid #fca5a5; }
+  .status.load { background: #dbeafe; color: #1e40af; display: block; border: 1px solid #93c5fd; }
 </style>
 </head>
 <body>
+<div class="container">
 
-<h1>Generador de Estudio de Seguridad</h1>
+<header>
+  <div class="icon">📋</div>
+  <div>
+    <h1>Generador de Estudio de Seguridad</h1>
+    <p>Complete todos los campos y genere el documento Word listo para imprimir</p>
+  </div>
+</header>
 
-<div class="info">
-  <strong>Instrucciones:</strong> Complete los campos y al final presione
-  <em>Generar Documento Word</em>.
+<!-- ============ DATOS DEL ENCARGADO ============ -->
+<div class="section">
+  <h2><span class="num">0</span> Datos del Encargado</h2>
+  <div class="row">
+    <div style="flex: 2;">
+      <label>Nombre del encargado</label>
+      <input type="text" id="encargado_nombre" placeholder="Ej: Derney Santana Almario">
+    </div>
+  </div>
+  <label style="margin-top:18px;">Fecha de ingreso</label>
+  <div class="row">
+    <div><label>Día</label><input type="text" id="fecha_dia" maxlength="2" placeholder="DD"></div>
+    <div><label>Mes</label><input type="text" id="fecha_mes" maxlength="2" placeholder="MM"></div>
+    <div><label>Año</label><input type="text" id="fecha_anio" maxlength="4" placeholder="AAAA"></div>
+  </div>
 </div>
 
 <!-- ============ 1. EVALUADO ============ -->
 <div class="section">
-  <h2>1. Datos del Evaluado (Conductor)</h2>
+  <h2><span class="num">1</span> Datos del Evaluado (Conductor)</h2>
   <div class="row">
     <div><label>Nombres y apellidos</label><input type="text" id="evaluado_nombres"></div>
     <div><label>Número de cédula</label><input type="text" id="evaluado_cedula"></div>
@@ -56,14 +118,26 @@
   <label>Dirección de domicilio</label>
   <input type="text" id="evaluado_direccion">
   <div class="row">
-    <div><label>Ciudad de nacimiento</label><input type="text" id="evaluado_ciudad_nacimiento"></div>
-    <div><label>Marcar como conductor (X o vacío)</label><input type="text" id="evaluado_conductor_check"></div>
+    <div>
+      <label>Departamento de nacimiento</label>
+      <select id="evaluado_departamento" onchange="actualizarCiudades('evaluado')">
+        <option value="">-- Seleccione departamento --</option>
+      </select>
+    </div>
+    <div>
+      <label>Ciudad / Municipio de nacimiento</label>
+      <select id="evaluado_ciudad" disabled>
+        <option value="">-- Primero seleccione departamento --</option>
+      </select>
+    </div>
   </div>
+  <label>Marcar como conductor (X o vacío)</label>
+  <input type="text" id="evaluado_conductor_check">
 </div>
 
 <!-- ============ 2. PROPIETARIO ============ -->
 <div class="section">
-  <h2>2. Datos del Propietario</h2>
+  <h2><span class="num">2</span> Datos del Propietario</h2>
   <div class="row">
     <div><label>Nombres y apellidos</label><input type="text" id="propietario_nombres"></div>
     <div><label>Número de cédula</label><input type="text" id="propietario_cedula"></div>
@@ -74,8 +148,20 @@
   </div>
   <label>Dirección de domicilio</label>
   <input type="text" id="propietario_direccion">
-  <label>Ciudad de nacimiento</label>
-  <input type="text" id="propietario_ciudad_nacimiento">
+  <div class="row">
+    <div>
+      <label>Departamento de nacimiento</label>
+      <select id="propietario_departamento" onchange="actualizarCiudades('propietario')">
+        <option value="">-- Seleccione departamento --</option>
+      </select>
+    </div>
+    <div>
+      <label>Ciudad / Municipio de nacimiento</label>
+      <select id="propietario_ciudad" disabled>
+        <option value="">-- Primero seleccione departamento --</option>
+      </select>
+    </div>
+  </div>
   <div class="row">
     <div><label>Marcar "Propietario" (X)</label><input type="text" id="propietario_check"></div>
     <div><label>Marcar "Propietario y Tenedor" (X)</label><input type="text" id="propietario_y_tenedor_check"></div>
@@ -85,7 +171,7 @@
 
 <!-- ============ 3. TENEDOR ============ -->
 <div class="section">
-  <h2>3. Datos del Tenedor</h2>
+  <h2><span class="num">3</span> Datos del Tenedor</h2>
   <div class="row">
     <div><label>Nombres y apellidos</label><input type="text" id="tenedor_nombres"></div>
     <div><label>Número de cédula</label><input type="text" id="tenedor_cedula"></div>
@@ -97,14 +183,26 @@
   <label>Dirección de domicilio</label>
   <input type="text" id="tenedor_direccion">
   <div class="row">
-    <div><label>Ciudad de nacimiento</label><input type="text" id="tenedor_ciudad_nacimiento"></div>
-    <div><label>Marcar "Tenedor" (X)</label><input type="text" id="tenedor_check"></div>
+    <div>
+      <label>Departamento de nacimiento</label>
+      <select id="tenedor_departamento" onchange="actualizarCiudades('tenedor')">
+        <option value="">-- Seleccione departamento --</option>
+      </select>
+    </div>
+    <div>
+      <label>Ciudad / Municipio de nacimiento</label>
+      <select id="tenedor_ciudad" disabled>
+        <option value="">-- Primero seleccione departamento --</option>
+      </select>
+    </div>
   </div>
+  <label>Marcar "Tenedor" (X)</label>
+  <input type="text" id="tenedor_check">
 </div>
 
-<!-- ============ 4. FAMILIARES (solo 2) ============ -->
+<!-- ============ 4. FAMILIARES ============ -->
 <div class="section">
-  <h2>4. Referencias Familiares (2)</h2>
+  <h2><span class="num">4</span> Referencias Familiares (2)</h2>
   <div class="row">
     <div><label>Familiar 1 - Nombre</label><input type="text" id="fam1_nombre"></div>
     <div><label>Familiar 1 - Cédula</label><input type="text" id="fam1_cedula"></div>
@@ -119,7 +217,7 @@
 
 <!-- ============ 5. VEHÍCULO ============ -->
 <div class="section">
-  <h2>5. Datos del Vehículo y Contrato</h2>
+  <h2><span class="num">5</span> Datos del Vehículo y Contrato</h2>
   <div class="row">
     <div><label>Placa</label><input type="text" id="placa"></div>
     <div><label>Capacidad de peso</label><input type="text" id="capacidad_peso"></div>
@@ -128,7 +226,7 @@
     <div><label>Factura electrónica (SI/NO)</label><input type="text" id="factura_electronica"></div>
     <div><label>Contrato de compraventa (SI/NO)</label><input type="text" id="contrato_compraventa"></div>
   </div>
-  <h2 style="margin-top:20px">Empresas vinculadas</h2>
+  <h2 style="margin-top:22px"><span class="num">5.1</span> Empresas vinculadas</h2>
   <div class="row">
     <div><label>Empresa 1 - Nombre</label><input type="text" id="empresa1_nombre"></div>
     <div><label>Empresa 1 - NIT</label><input type="text" id="empresa1_nit"></div>
@@ -143,7 +241,7 @@
 
 <!-- ============ 6. GPS ============ -->
 <div class="section">
-  <h2>6. Datos de Plataforma GPS</h2>
+  <h2><span class="num">6</span> Datos de Plataforma GPS</h2>
   <div class="row">
     <div><label>Plataforma</label><input type="text" id="gps_plataforma"></div>
     <div><label>Usuario</label><input type="text" id="gps_usuario"></div>
@@ -159,16 +257,94 @@
 </button>
 <div class="status" id="status"></div>
 
+</div>
+
 <!-- ============================================================
-     LIBRERÍAS (solo las necesarias para texto)
+     LIBRERÍAS
      ============================================================ -->
 <script src="pizzip.js"></script>
 <script src="docxtemplater.js"></script>
 <script src="FileSaver.min.js"></script>
 
 <script>
-// Alias consistente para usar el constructor
-const Docxtemplater = window.docxtemplater;
+// ============================================================
+// DATOS DE DEPARTAMENTOS Y CIUDADES DE COLOMBIA
+// ============================================================
+const datosColombia = [
+  {"departamento":"Amazonas","ciudades":["Leticia","Puerto Nariño"]},
+  {"departamento":"Antioquia","ciudades":["Abejorral","Abriaquí","Alejandría","Amagá","Amalfi","Andes","Angelópolis","Angostura","Anorí","Anzá","Apartadó","Arboletes","Argelia","Armenia","Barbosa","Bello","Belmira","Betania","Betulia","Briceño","Buriticá","Cáceres","Caicedo","Caldas","Campamento","Cañasgordas","Caracolí","Caramanta","Carepa","Carolina del Príncipe","Caucasia","Chigorodó","Cisneros","Ciudad Bolívar","Cocorná","Concepción","Concordia","Copacabana","Dabeiba","Donmatías","Ebéjico","El Bagre","El Carmen de Viboral","El Peñol","El Retiro","El Santuario","Entrerríos","Envigado","Fredonia","Frontino","Giraldo","Girardota","Gómez Plata","Granada","Guadalupe","Guarne","Guatapé","Heliconia","Hispania","Itagüí","Ituango","Jardín","Jericó","La Ceja","La Estrella","La Pintada","La Unión","Liborina","Maceo","Marinilla","Medellín","Montebello","Murindó","Mutatá","Nariño","Nechí","Necoclí","Olaya","Peque","Pueblorrico","Puerto Berrío","Puerto Nare","Puerto Triunfo","Remedios","Rionegro","Sabanalarga","Sabaneta","Salgar","San Andrés de Cuerquia","San Carlos","San Francisco","San Jerónimo","San José de la Montaña","San Juan de Urabá","San Luis","San Pedro de Urabá","San Pedro de los Milagros","San Rafael","San Roque","San Vicente","Santa Bárbara","Santa Fe de Antioquia","Santa Rosa de Osos","Santo Domingo","Segovia","Sonsón","Sopetrán","Támesis","Tarazá","Tarso","Titiribí","Toledo","Turbo","Uramita","Urrao","Valdivia","Valparaíso","Vegachí","Venecia","Vigía del Fuerte","Yalí","Yarumal","Yolombó","Yondó","Zaragoza"]},
+  {"departamento":"Arauca","ciudades":["Arauca","Arauquita","Cravo Norte","Fortul","Puerto Rondón","Saravena","Tame"]},
+  {"departamento":"Atlántico","ciudades":["Baranoa","Barranquilla","Campo de la Cruz","Candelaria","Galapa","Juan de Acosta","Luruaco","Malambo","Manatí","Palmar de Varela","Piojó","Polonuevo","Ponedera","Puerto Colombia","Repelón","Sabanagrande","Sabanalarga","Santa Lucía","Santo Tomás","Soledad","Suán","Tubará","Usiacurí"]},
+  {"departamento":"Bolívar","ciudades":["Achí","Altos del Rosario","Arenal","Arjona","Arroyohondo","Barranco de Loba","Calamar","Cantagallo","Cartagena","Cicuco","Clemencia","Córdoba","El Carmen de Bolívar","El Guamo","El Peñón","Hatillo de Loba","Magangué","Mahates","Margarita","María la Baja","Mompós","Montecristo","Morales","Norosí","Pinillos","Regidor","Río Viejo","San Cristóbal","San Estanislao","San Fernando","San Jacinto","San Jacinto del Cauca","San Juan Nepomuceno","San Martín de Loba","San Pablo","Santa Catalina","Santa Rosa","Santa Rosa del Sur","Simití","Soplaviento","Talaigua Nuevo","Tiquisio","Turbaco","Turbaná","Villanueva","Zambrano"]},
+  {"departamento":"Boyacá","ciudades":["Almeida","Aquitania","Arcabuco","Belén","Berbeo","Betéitiva","Boavita","Boyacá","Briceño","Buenavista","Busbanzá","Caldas","Campohermoso","Cerinza","Chinavita","Chiquinquirá","Chíquiza","Chiscas","Chita","Chitaraque","Chivatá","Ciénega","Cómbita","Coper","Corrales","Covarachía","Cubará","Cucaita","Cuítiva","Duitama","El Cocuy","El Espino","Firavitoba","Floresta","Gachantivá","Gámeza","Garagoa","Guacamayas","Guateque","Guayatá","Güicán","Iza","Jenesano","Jericó","La Capilla","La Uvita","La Victoria","Labranzagrande","Macanal","Maripí","Miraflores","Mongua","Monguí","Moniquirá","Motavita","Muzo","Nobsa","Nuevo Colón","Oicatá","Otanche","Pachavita","Páez","Paipa","Pajarito","Panqueba","Pauna","Paya","Paz de Río","Pesca","Pisba","Puerto Boyacá","Quípama","Ramiriquí","Ráquira","Rondón","Saboyá","Sáchica","Samacá","San Eduardo","San José de Pare","San Luis de Gaceno","San Mateo","San Miguel de Sema","San Pablo de Borbur","Santana","Santa María","Santa Rosa de Viterbo","Santa Sofía","Sativanorte","Sativasur","Siachoque","Soatá","Socotá","Socha","Sogamoso","Somondoco","Sora","Soracá","Sotaquirá","Susacón","Sutamarchán","Sutatenza","Tasco","Tenza","Tibaná","Tibasosa","Tinjacá","Tipacoque","Toca","Togüí","Tópaga","Tota","Tunja","Tununguá","Turmequé","Tuta","Tutazá","Umbita","Ventaquemada","Villa de Leyva","Viracachá","Zetaquira"]},
+  {"departamento":"Caldas","ciudades":["Aguadas","Anserma","Aranzazu","Belalcázar","Chinchiná","Filadelfia","La Dorada","La Merced","Manizales","Manzanares","Marmato","Marquetalia","Marulanda","Neira","Norcasia","Pácora","Palestina","Pensilvania","Riosucio","Risaralda","Salamina","Samaná","San José","Supía","Victoria","Villamaría","Viterbo"]},
+  {"departamento":"Caquetá","ciudades":["Albania","Belén de los Andaquíes","Cartagena del Chairá","Curillo","El Doncello","El Paujil","Florencia","La Montañita","Milán","Morelia","Puerto Rico","San José del Fragua","San Vicente del Caguán","Solano","Solita","Valparaíso"]},
+  {"departamento":"Casanare","ciudades":["Aguazul","Chámeza","Hato Corozal","La Salina","Maní","Monterrey","Nunchía","Orocué","Paz de Ariporo","Pore","Recetor","Sabanalarga","Sácama","San Luis de Palenque","Támara","Tauramena","Trinidad","Villanueva","Yopal"]},
+  {"departamento":"Cauca","ciudades":["Almaguer","Argelia","Balboa","Bolívar","Buenos Aires","Cajibío","Caldono","Caloto","Corinto","El Tambo","Florencia","Guachené","Guapí","Inzá","Jambaló","La Sierra","La Vega","López de Micay","Mercaderes","Miranda","Morales","Padilla","Páez","Patía","Piamonte","Piendamó","Popayán","Puerto Tejada","Puracé","Rosas","San Sebastián","Santa Rosa","Santander de Quilichao","Silvia","Sotará","Suárez","Sucre","Timbío","Timbiquí","Toribío","Totoró","Villa Rica"]},
+  {"departamento":"Cesar","ciudades":["Aguachica","Agustín Codazzi","Astrea","Becerril","Bosconia","Chimichagua","Chiriguaná","Curumaní","El Copey","El Paso","Gamarra","González","La Gloria","La Jagua de Ibirico","La Paz","Manaure Balcón del Cesar","Pailitas","Pelaya","Pueblo Bello","Río de Oro","San Alberto","San Diego","San Martín","Tamalameque","Valledupar"]},
+  {"departamento":"Chocó","ciudades":["Acandí","Alto Baudó","Atrato","Bagadó","Bahía Solano","Bajo Baudó","Bojayá","Carmen del Darién","Cértegui","Condoto","El Carmen de Atrato","El Litoral del San Juan","Istmina","Juradó","Lloró","Medio Atrato","Medio Baudó","Medio San Juan","Nóvita","Nuquí","Quibdó","Río Iró","Río Quito","Riosucio","San José del Palmar","Sipí","Tadó","Unguía","Unión Panamericana"]},
+  {"departamento":"Córdoba","ciudades":["Ayapel","Buenavista","Canalete","Cereté","Chimá","Chinú","Ciénaga de Oro","Cotorra","La Apartada","Lorica","Los Córdobas","Momil","Montelíbano","Montería","Moñitos","Planeta Rica","Pueblo Nuevo","Puerto Escondido","Puerto Libertador","Purísima","Sahagún","San Andrés de Sotavento","San Antero","San Bernardo del Viento","San Carlos","San José de Uré","San Pelayo","Tierralta","Tuchín","Valencia"]},
+  {"departamento":"Cundinamarca","ciudades":["Agua de Dios","Albán","Anapoima","Anolaima","Apulo","Arbeláez","Beltrán","Bituima","Bojacá","Cabrera","Cachipay","Cajicá","Caparrapí","Caqueza","Carmen de Carupa","Chaguaní","Chía","Chipaque","Choachí","Chocontá","Cogua","Cota","Cucunubá","El Colegio","El Peñón","El Rosal","Facatativá","Fomeque","Fosca","Funza","Fúquene","Fusagasugá","Gachalá","Gachancipá","Gachetá","Gama","Girardot","Granada","Guachetá","Guaduas","Guasca","Guataquí","Guatavita","Guayabal de Síquima","Guayabetal","Gutiérrez","Jerusalén","Junín","La Calera","La Mesa","La Palma","La Peña","La Vega","Lenguazaque","Macheta","Madrid","Manta","Medina","Mosquera","Nariño","Nemocón","Nilo","Nimaima","Nocaima","Pacho","Paime","Pandi","Paratebueno","Pasca","Puerto Salgar","Pulí","Quebradanegra","Quetame","Quipile","Ricaurte","San Antonio del Tequendama","San Bernardo","San Cayetano","San Francisco","San Juan de Rioseco","Sasaima","Sesquilé","Sibaté","Silvania","Simijaca","Soacha","Sopó","Subachoque","Suesca","Supatá","Susa","Sutatausa","Tabio","Tausa","Tena","Tenjo","Tibacuy","Tibirita","Tocaima","Tocancipá","Topaipí","Ubalá","Ubaque","Ubaté","Une","Útica","Venecia","Vergara","Vianí","Villagómez","Villapinzón","Villeta","Viotá","Yacopí","Zipacón","Zipaquirá"]},
+  {"departamento":"Guainía","ciudades":["Inírida","Barranco Minas","Mapiripana","San Felipe","Puerto Colombia","La Guadalupe","Cacahual","Pana Pana","Morichal"]},
+  {"departamento":"Guaviare","ciudades":["Calamar","El Retorno","Miraflores","San José del Guaviare"]},
+  {"departamento":"Huila","ciudades":["Acevedo","Agrado","Aipe","Algeciras","Altamira","Baraya","Campoalegre","Colombia","Elías","Garzón","Gigante","Guadalupe","Hobo","Íquira","Isnos","La Argentina","La Plata","Nátaga","Neiva","Oporapa","Paicol","Palermo","Palestina","Pital","Pitalito","Rivera","Saladoblanco","San Agustín","Santa María","Suaza","Tarqui","Tello","Teruel","Tesalia","Timaná","Villavieja","Yaguará"]},
+  {"departamento":"La Guajira","ciudades":["Albania","Barrancas","Dibulla","Distracción","El Molino","Fonseca","Hatonuevo","La Jagua del Pilar","Maicao","Manaure","Riohacha","San Juan del Cesar","Uribia","Urumita","Villanueva"]},
+  {"departamento":"Magdalena","ciudades":["Algarrobo","Aracataca","Ariguaní","Cerro San Antonio","Chibolo","Ciénaga","Concordia","El Banco","El Piñón","El Retén","Fundación","Guamal","Nueva Granada","Pedraza","Pijiño del Carmen","Pivijay","Plato","Puebloviejo","Remolino","Sabanas de San Ángel","Salamina","San Sebastián de Buenavista","San Zenón","Santa Ana","Santa Bárbara de Pinto","Santa Marta","Sitionuevo","Tenerife","Zapayán","Zona Bananera"]},
+  {"departamento":"Meta","ciudades":["Acacías","Barranca de Upía","Cabuyaro","Castilla la Nueva","Cubarral","Cumaral","El Calvario","El Castillo","El Dorado","Fuente de Oro","Granada","Guamal","La Macarena","La Uribe","Lejanías","Mapiripán","Mesetas","Puerto Concordia","Puerto Gaitán","Puerto Lleras","Puerto López","Puerto Rico","Restrepo","San Carlos de Guaroa","San Juan de Arama","San Juanito","San Martín","Villavicencio","Vistahermosa"]},
+  {"departamento":"Nariño","ciudades":["Albán","Aldana","Ancuyá","Arboleda","Barbacoas","Belén","Buesaco","Chachagüí","Colón","Consacá","Contadero","Córdoba","Cuaspud","Cumbal","Cumbitara","El Charco","El Peñol","El Rosario","El Tablón de Gómez","El Tambo","Francisco Pizarro","Funes","Guachucal","Guaitarilla","Gualmatán","Iles","Imués","Ipiales","La Cruz","La Florida","La Llanada","La Tola","La Unión","Leiva","Linares","Los Andes","Magüí Payán","Mallama","Mosquera","Nariño","Olaya Herrera","Ospina","Pasto","Policarpa","Potosí","Providencia","Puerres","Pupiales","Ricaurte","Roberto Payán","Samaniego","Sandoná","San Bernardo","San Lorenzo","San Pablo","San Pedro de Cartago","Sapuyes","Taminango","Tangua","Tumaco","Túquerres","Yacuanquer"]},
+  {"departamento":"Norte de Santander","ciudades":["Abrego","Arboledas","Bochalema","Bucarasica","Cácota","Cáchira","Chinácota","Chitagá","Convención","Cúcuta","Cucutilla","Durania","El Carmen","El Tarra","El Zulia","Gramalote","Hacarí","Herrán","La Esperanza","La Playa de Belén","Labateca","Los Patios","Lourdes","Mutiscua","Ocaña","Pamplona","Pamplonita","Puerto Santander","Ragonvalia","Salazar de Las Palmas","San Calixto","San Cayetano","Santiago","Santo Domingo de Silos","Sardinata","Teorama","Tibú","Toledo","Villa Caro","Villa del Rosario"]},
+  {"departamento":"Putumayo","ciudades":["Colón","Mocoa","Orito","Puerto Asís","Puerto Caicedo","Puerto Guzmán","Puerto Leguízamo","San Francisco","San Miguel","Santiago","Sibundoy","Valle del Guamuez","Villagarzón"]},
+  {"departamento":"Quindío","ciudades":["Armenia","Buenavista","Calarcá","Circasia","Córdoba","Filandia","Génova","La Tebaida","Montenegro","Pijao","Quimbaya","Salento"]},
+  {"departamento":"Risaralda","ciudades":["Apía","Balboa","Belén de Umbría","Dosquebradas","Guática","La Celia","La Virginia","Marsella","Mistrató","Pereira","Pueblo Rico","Quinchía","Santa Rosa de Cabal","Santuario"]},
+  {"departamento":"San Andrés y Providencia","ciudades":["Providencia","San Andrés"]},
+  {"departamento":"Santander","ciudades":["Aguada","Albania","Aratoca","Barbosa","Barichara","Barrancabermeja","Betulia","Bolívar","Bucaramanga","Cabrera","California","Capitanejo","Carcasí","Cepitá","Cerrito","Charalá","Charta","Chima","Chipatá","Cimitarra","Concepción","Confines","Contratación","Coromoro","Curití","El Carmen de Chucurí","El Guacamayo","El Peñón","El Playón","Encino","Enciso","Florián","Floridablanca","Galán","Gámbita","Girón","Guaca","Guadalupe","Guapotá","Guavatá","Güepsa","Hato","Jesús María","Jordán","La Belleza","La Paz","Landázuri","Lebrija","Los Santos","Macaravita","Málaga","Matanza","Mogotes","Molagavita","Ocamonte","Oiba","Onzaga","Palmar","Palmas del Socorro","Páramo","Piedecuesta","Pinchote","Puente Nacional","Puerto Parra","Puerto Wilches","Rionegro","Sabana de Torres","San Andrés","San Benito","San Gil","San Joaquín","San José de Miranda","San Miguel","San Vicente de Chucurí","Santa Bárbara","Santa Helena del Opón","Simacota","Socorro","Suaita","Sucre","Suratá","Tona","Valle de San José","Vélez","Vetas","Villanueva","Zapatoca"]},
+  {"departamento":"Sucre","ciudades":["Buenavista","Caimito","Chalán","Colosó","Corozal","Coveñas","El Roble","Galeras","Guaranda","La Unión","Los Palmitos","Majagual","Morroa","Ovejas","Palmito","Sampués","San Antonio de Palmito","San Benito Abad","San Juan de Betulia","San Marcos","San Onofre","San Pedro","Sincelejo","Sincé","Sucre","Tolú","Toluviejo"]},
+  {"departamento":"Tolima","ciudades":["Alpujarra","Alvarado","Ambalema","Anzoátegui","Armero","Ataco","Cajamarca","Chaparral","Coello","Coyaima","Cunday","Dolores","El Espinal","Falan","Flandes","Fresno","Guamo","Herveo","Honda","Ibagué","Icononzo","Lérida","Líbano","Mariquita","Melgar","Natagaima","Ortega","Palocabildo","Piedras","Planadas","Prado","Purificación","Rioblanco","Roncesvalles","Rovira","Saldaña","San Antonio","San Luis","Santa Isabel","Suárez","Valle de San Juan","Venadillo","Villahermosa","Villarrica"]},
+  {"departamento":"Valle del Cauca","ciudades":["Alcalá","Andalucía","Ansermanuevo","Argelia","Bolívar","Buenaventura","Buga","Bugalagrande","Caicedonia","Cali","Calima","Candelaria","Cartago","Dagua","El Águila","El Cairo","El Cerrito","El Dovio","Florida","Ginebra","Guacarí","Guadalajara de Buga","Jamundí","La Cumbre","La Unión","La Victoria","Obando","Palmira","Pradera","Restrepo","Riofrío","Roldanillo","San Pedro","Sevilla","Toro","Trujillo","Tuluá","Ulloa","Versalles","Vijes","Yotoco","Yumbo","Zarzal"]},
+  {"departamento":"Vaupés","ciudades":["Carurú","Mitú","Taraira","Papunaua","Yavaraté"]},
+  {"departamento":"Vichada","ciudades":["Cumaribo","La Primavera","Puerto Carreño","Santa Rosalía"]},
+  {"departamento":"Bogotá D.C.","ciudades":["Bogotá"]}
+];
+
+// ============================================================
+// INICIALIZAR LISTAS DESPLEGABLES
+// ============================================================
+function inicializarDepartamentos() {
+  const selects = ['evaluado_departamento', 'propietario_departamento', 'tenedor_departamento'];
+  selects.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    datosColombia.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.departamento;
+      opt.textContent = d.departamento;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function actualizarCiudades(prefijo) {
+  const depto = document.getElementById(prefijo + '_departamento').value;
+  const ciudadSel = document.getElementById(prefijo + '_ciudad');
+  ciudadSel.innerHTML = '';
+  if (!depto) {
+    ciudadSel.disabled = true;
+    ciudadSel.innerHTML = '<option value="">-- Primero seleccione departamento --</option>';
+    return;
+  }
+  const data = datosColombia.find(d => d.departamento === depto);
+  if (!data) return;
+  ciudadSel.disabled = false;
+  ciudadSel.innerHTML = '<option value="">-- Seleccione ciudad --</option>';
+  data.ciudades.slice().sort().forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c + ' / ' + depto;
+    opt.textContent = c + ' / ' + depto;
+    ciudadSel.appendChild(opt);
+  });
+}
+
+inicializarDepartamentos();
 
 // ============================================================
 // UTILIDADES
@@ -194,7 +370,7 @@ async function generarDocumento() {
 
   try {
     if (window.location.protocol === 'file:') {
-      throw new Error('Abra la aplicación desde un servidor web (GitHub Pages); no directamente como archivo local.');
+      throw new Error('Abra la aplicación desde GitHub Pages, no como archivo local.');
     }
     if (typeof PizZip === 'undefined') throw new Error('PizZip no se cargó.');
     if (typeof Docxtemplater === 'undefined' || typeof Docxtemplater !== 'function') {
@@ -226,39 +402,50 @@ async function generarDocumento() {
       }
     }
 
-    // Datos de texto
+    // Datos
     const datos = {
+      // Encargado
+      encargado_nombre: val('encargado_nombre'),
+      fecha_dia: val('fecha_dia'),
+      fecha_mes: val('fecha_mes'),
+      fecha_anio: val('fecha_anio'),
+
+      // Evaluado
       evaluado_nombres: val('evaluado_nombres'),
       evaluado_cedula: val('evaluado_cedula'),
       evaluado_telefono: val('evaluado_telefono'),
       evaluado_direccion: val('evaluado_direccion'),
-      evaluado_ciudad_nacimiento: val('evaluado_ciudad_nacimiento'),
+      evaluado_ciudad_nacimiento: val('evaluado_ciudad'),
       evaluado_correo: val('evaluado_correo'),
       evaluado_conductor_check: val('evaluado_conductor_check'),
 
+      // Propietario
       propietario_nombres: val('propietario_nombres'),
       propietario_cedula: val('propietario_cedula'),
       propietario_telefono: val('propietario_telefono'),
       propietario_direccion: val('propietario_direccion'),
-      propietario_ciudad_nacimiento: val('propietario_ciudad_nacimiento'),
+      propietario_ciudad_nacimiento: val('propietario_ciudad'),
       propietario_correo: val('propietario_correo'),
       propietario_check: val('propietario_check'),
       propietario_y_tenedor_check: val('propietario_y_tenedor_check'),
       propietario_y_conductor_check: val('propietario_y_conductor_check'),
 
+      // Tenedor
       tenedor_nombres: val('tenedor_nombres'),
       tenedor_cedula: val('tenedor_cedula'),
       tenedor_telefono: val('tenedor_telefono'),
       tenedor_direccion: val('tenedor_direccion'),
-      tenedor_ciudad_nacimiento: val('tenedor_ciudad_nacimiento'),
+      tenedor_ciudad_nacimiento: val('tenedor_ciudad'),
       tenedor_correo: val('tenedor_correo'),
       tenedor_check: val('tenedor_check'),
 
+      // Vehículo
       placa: val('placa'),
       capacidad_peso: val('capacidad_peso'),
       factura_electronica: val('factura_electronica'),
       contrato_compraventa: val('contrato_compraventa'),
 
+      // Empresas
       empresa1_nombre: val('empresa1_nombre'),
       empresa1_nit: val('empresa1_nit'),
       empresa1_telefono: val('empresa1_telefono'),
@@ -266,6 +453,7 @@ async function generarDocumento() {
       empresa2_nit: val('empresa2_nit'),
       empresa2_telefono: val('empresa2_telefono'),
 
+      // GPS
       gps_plataforma: val('gps_plataforma'),
       gps_usuario: val('gps_usuario'),
       gps_enlace: val('gps_enlace'),
@@ -292,6 +480,5 @@ async function generarDocumento() {
   }
 }
 </script>
-
 </body>
 </html>
